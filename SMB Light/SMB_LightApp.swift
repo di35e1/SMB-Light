@@ -1,17 +1,13 @@
-//
-//  SMB_LightApp.swift
-//  SMB Light
-//
-//  Created by Киркач Сергей Викторович on 08.06.2026.
-//
-
 import SwiftUI
 
 @main
-struct SMB_LightApp: App {
+struct SmblightApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        // Оставляем пустышку, так как окнами мы теперь управляем сами
+        Settings {
+            EmptyView()
         }
     }
 }
