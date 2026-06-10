@@ -7,6 +7,7 @@ import Combine
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var statusItem: NSStatusItem!
     var menu: NSMenu!
+    var proxyMenuItem: NSMenuItem?
     var timer: Timer?
     let monitor = NWPathMonitor()
     var isNetworkAvailable = false
@@ -48,9 +49,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         setupNetworkMonitor()
         setupBindings()
         buildMenu()
-        
-        // Запуск таймера (каждые 10 секунд)
-        // timer = Timer.scheduledTimer(timeInterval: 10.0, target: self, selector: #selector(updateStatus), userInfo: nil, repeats: true)
         updateStatus()
         
         // Слушаем ПОДКЛЮЧЕНИЕ дисков
@@ -72,7 +70,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             print("Событие: диск размонтирован")
             self?.updateStatus()
         }
-        
     }
 
     func setupNetworkMonitor() {
@@ -88,6 +85,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func buildMenu() {
         menu = NSMenu()
+        
+        // Proxy toggle
+        let proxyItem = NSMenuItem(title: "SOCKS Proxy", action: #selector(toggleProxy(_:)), keyEquivalent: "")
+        proxyItem.state = (ProxyManager.isSocksProxyEnabled()) ? .on : .off
+        self.proxyMenuItem = proxyItem
+        menu.addItem(proxyItem)
+        menu.addItem(NSMenuItem.separator())
         
         // Priority Drives
         menu.addItem(NSMenuItem(title: "Open Priority drives", action: #selector(openPriorityDrives), keyEquivalent: ""))
@@ -118,6 +122,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         let dangerZone = NSMenuItem(title: "Preferences", action: nil, keyEquivalent: "")
         let dangerMenu = NSMenu()
+        
         dangerMenu.addItem(NSMenuItem(title: "Terminal", action: #selector(openTerminal), keyEquivalent: ""))
         dangerMenu.addItem(NSMenuItem(title: "killall Finder", action: #selector(killFinder), keyEquivalent: ""))
         dangerMenu.addItem(NSMenuItem.separator())
@@ -178,6 +183,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         
         statusItem.button?.title = "SMB " + highlights.joined(separator: " | ")
+
+        let isProxyOn = ProxyManager.isSocksProxyEnabled()
+        if isProxyOn {
+            statusItem.button?.title  += " | 👽"
+            }
+       
+        if let proxyItem = self.proxyMenuItem {
+                proxyItem.state = isProxyOn ? .on : .off
+                proxyItem.title = isProxyOn ? "👽 Disable SOCKS Proxy" : "Enable SOCKS Proxy"
+            }
+
     }
     
     func getMountedSMBDrives() -> [String: String] {
@@ -217,6 +233,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     // MARK: - Actions
+
+    @objc func toggleProxy(_ sender: NSMenuItem) {
+        let isCurrentlyOn = sender.state == .on
+        let newState = !isCurrentlyOn
+        
+        // Вызываем метод только с одним параметром — включить или выключить
+        let success = ProxyManager.setSocksProxy(enabled: newState)
+
+        if success {
+            sender.state = newState ? .on : .off
+            sender.title = newState ? "Disable SOCKS Proxy" : "Enable SOCKS Proxy"
+            print("Статус SOCKS прокси изменен: \(newState)")
+        } else {
+            print("Не удалось изменить статус прокси (возможно, отменен ввод пароля)")
+        }
+    }
+    
     
     @objc func driveClicked(_ sender: NSMenuItem) {
         guard let drive = sender.representedObject as? Drive else { return }
