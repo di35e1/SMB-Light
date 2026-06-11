@@ -17,31 +17,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let settings = SettingsManager.shared
     
     func setupBindings() {
-            settings.objectWillChange
-                // Ждем 0.5 секунды после окончания ввода текста в настройках
-                .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
-                .sink { [weak self] _ in
-                    // Пересобираем меню и сразу обновляем статусы (кружочки)
-                    self?.buildMenu()
-                    self?.updateStatus()
-                }
-                .store(in: &cancellables)
-        }
-
+        settings.objectWillChange
+        // Ждем 0.5 секунды после окончания ввода текста в настройках
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                // Пересобираем меню и сразу обновляем статусы (кружочки)
+                self?.buildMenu()
+                self?.updateStatus()
+            }
+            .store(in: &cancellables)
+    }
+    
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // 1. ПРОВЕРКА НА ВТОРУЮ КОПИЮ
-            // Получаем Bundle ID приложения (например, com.user.smblight)
-            if let bundleID = Bundle.main.bundleIdentifier {
-                // Ищем все запущенные процессы с таким же ID
-                let runningApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-                
-                // Если найдено больше одного процесса (то есть мы и кто-то еще),
-                // тихо убиваем текущую копию до того, как она создаст иконку в меню.
-                if runningApps.count > 1 {
-                    NSApp.terminate(nil)
-                    return
-                }
+        // Получаем Bundle ID приложения (например, com.user.smblight)
+        if let bundleID = Bundle.main.bundleIdentifier {
+            // Ищем все запущенные процессы с таким же ID
+            let runningApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            
+            // Если найдено больше одного процесса (то есть мы и кто-то еще),
+            // тихо убиваем текущую копию до того, как она создаст иконку в меню.
+            if runningApps.count > 1 {
+                NSApp.terminate(nil)
+                return
             }
+        }
         // Инициализация статус-бара
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.title = "SMB..."
@@ -60,7 +60,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             print("Событие: диск смонтирован")
             self?.updateStatus()
         }
-                
+        
         // Слушаем ОТКЛЮЧЕНИЕ дисков
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didUnmountNotification,
@@ -71,7 +71,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self?.updateStatus()
         }
     }
-
+    
     func setupNetworkMonitor() {
         monitor.pathUpdateHandler = { path in
             self.isNetworkAvailable = path.status == .satisfied
@@ -82,16 +82,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let queue = DispatchQueue(label: "NetworkMonitor")
         monitor.start(queue: queue)
     }
-
+    
     func buildMenu() {
         menu = NSMenu()
-        
-        // Proxy toggle
-        let proxyItem = NSMenuItem(title: "SOCKS Proxy", action: #selector(toggleProxy(_:)), keyEquivalent: "")
-        proxyItem.state = (ProxyManager.isSocksProxyEnabled()) ? .on : .off
-        self.proxyMenuItem = proxyItem
-        menu.addItem(proxyItem)
-        menu.addItem(NSMenuItem.separator())
         
         // Priority Drives
         menu.addItem(NSMenuItem(title: "Open Priority drives", action: #selector(openPriorityDrives), keyEquivalent: ""))
@@ -116,9 +109,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         
         // Tools & Settings
-//        menu.addItem(NSMenuItem.separator())
-//        menu.addItem(NSMenuItem(title: "🤖 Editor", action: #selector(openEditor), keyEquivalent: ""))
-//        menu.addItem(NSMenuItem(title: "🖥️ Mediabank", action: #selector(openMediabank), keyEquivalent: ""))
+        //        menu.addItem(NSMenuItem.separator())
+        //        menu.addItem(NSMenuItem(title: "🤖 Editor", action: #selector(openEditor), keyEquivalent: ""))
+        //        menu.addItem(NSMenuItem(title: "🖥️ Mediabank", action: #selector(openMediabank), keyEquivalent: ""))
         
         let dangerZone = NSMenuItem(title: "Preferences", action: nil, keyEquivalent: "")
         let dangerMenu = NSMenu()
@@ -142,11 +135,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menu.addItem(NSMenuItem.separator())
         menu.addItem(dangerZone)
         menu.addItem(NSMenuItem.separator())
+
+        if isCurrentUserAdmin() {
+            // Proxy toggle
+            let proxyItem = NSMenuItem(title: "SOCKS Proxy", action: #selector(toggleProxy(_:)), keyEquivalent: "")
+            proxyItem.state = (ProxyManager.isSocksProxyEnabled()) ? .on : .off
+            self.proxyMenuItem = proxyItem
+            menu.addItem(proxyItem)
+            menu.addItem(NSMenuItem.separator())
+        } else {
+            // Если пользователь не админ, очищаем ссылку, чтобы кнопка точно нигде не всплыла
+            self.proxyMenuItem = nil
+        }
+
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: ""))
         
         statusItem.menu = menu
     }
-
+    
     @objc func updateStatus() {
         guard isNetworkAvailable else {
             statusItem.button?.title = "Network offline"
@@ -155,7 +161,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Получаем словарь [путь: точка_монтирования]
         let mountedMap = getMountedSMBDrives()
-
+        
         let currentTheme = IconTheme.get(theme: settings.theme)
         var highlights: [String] = []
         
@@ -164,10 +170,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 
                 // Приводим путь из настроек к нижнему регистру
                 let pathLower = drive.path.lowercased()
-
+                
                 // Проверяем как закодированный путь (системный стандарт), так и оригинал на всякий случай
                 let isMounted = mountedMap.keys.contains(pathLower)
-
+                
                 if isMounted {
                     item.title = "\(currentTheme.online) Open \(drive.name)"
                     item.state = .on
@@ -183,17 +189,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         
         statusItem.button?.title = "SMB " + highlights.joined(separator: " | ")
-
+        
         let isProxyOn = ProxyManager.isSocksProxyEnabled()
         if isProxyOn {
             statusItem.button?.title  += " | 👽"
-            }
-       
+        }
+        
         if let proxyItem = self.proxyMenuItem {
-                proxyItem.state = isProxyOn ? .on : .off
-                proxyItem.title = isProxyOn ? "👽 Disable SOCKS Proxy" : "Enable SOCKS Proxy"
-            }
-
+            proxyItem.state = isProxyOn ? .on : .off
+            proxyItem.title = isProxyOn ? "👽 Disable SOCKS Proxy" : "Enable SOCKS Proxy"
+        }
+        
     }
     
     func getMountedSMBDrives() -> [String: String] {
@@ -231,16 +237,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         return mapping
     }
-
+    
     // MARK: - Actions
-
+    
     @objc func toggleProxy(_ sender: NSMenuItem) {
         let isCurrentlyOn = sender.state == .on
         let newState = !isCurrentlyOn
         
         // Вызываем метод только с одним параметром — включить или выключить
         let success = ProxyManager.setSocksProxy(enabled: newState)
-
+        
         if success {
             sender.state = newState ? .on : .off
             sender.title = newState ? "Disable SOCKS Proxy" : "Enable SOCKS Proxy"
@@ -273,7 +279,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         }
     }
-
+    
     @objc func openPriorityDrives() {
         for drive in settings.priorityDrives {
             let urlString = "smb://\(drive.path)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
@@ -282,7 +288,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         }
     }
-
+    
     @objc func forceUnmount() {
         let alert = NSAlert()
         alert.messageText = "Отключить все сетевые диски?"
@@ -337,65 +343,85 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             sender.state = .off
         }
     }
-
+    
     @objc func openTerminal() {
         NSWorkspace.shared.openApplication(at: URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"), configuration: NSWorkspace.OpenConfiguration(), completionHandler: nil)
     }
-
+    
     @objc func killFinder() {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
         task.arguments = ["Finder"]
         try? task.run()
     }
-
+    
     @objc func openEditor() {
         NSWorkspace.shared.open(URL(string: "https://editor.visualrian.ru/")!)
     }
-
+    
     @objc func openMediabank() {
         NSWorkspace.shared.open(URL(string: "https://riamediabank.ru/")!)
     }
-
+    
     @objc func showSettings() {
-            // 2. ВКЛЮЧАЕМ ОТОБРАЖЕНИЕ В ДОКЕ
-            NSApp.setActivationPolicy(.regular)
-            
-            // Если окно уже было создано, просто выводим его на передний план
-            if let window = settingsWindow {
-                window.makeKeyAndOrderFront(nil)
-                NSApp.activate(ignoringOtherApps: true)
-                return
-            }
-            
-            // Если окна нет, создаем его и оборачиваем наш SwiftUI-интерфейс
-            let hostingController = NSHostingController(rootView: SettingsView())
-            
-            let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 550, height: 500),
-                styleMask: [.titled, .closable, .miniaturizable],
-                backing: .buffered,
-                defer: false
-            )
-            
-            window.center()
-            window.title = "Настройки Smblight"
-            window.contentViewController = hostingController
-            window.isReleasedWhenClosed = false // чтобы окно не уничтожалось при закрытии на крестик
-            
-            // НАЗНАЧАЕМ ДЕЛЕГАТА (чтобы отловить момент закрытия окна)
-            window.delegate = self
-            
-            self.settingsWindow = window
-            
-            // Выводим окно поверх всех
+        // 2. ВКЛЮЧАЕМ ОТОБРАЖЕНИЕ В ДОКЕ
+        NSApp.setActivationPolicy(.regular)
+        
+        // Если окно уже было создано, просто выводим его на передний план
+        if let window = settingsWindow {
             window.makeKeyAndOrderFront(nil)
+            window.makeFirstResponder(nil)
             NSApp.activate(ignoringOtherApps: true)
+            return
         }
-
-        // 3. ОТЛАВЛИВАЕМ ЗАКРЫТИЕ ОКНА
-        func windowWillClose(_ notification: Notification) {
-            // Возвращаем приложение в фоновый режим (прячем иконку из Дока)
-            NSApp.setActivationPolicy(.accessory)
-        }
+        
+        // Если окна нет, создаем его и оборачиваем наш SwiftUI-интерфейс
+        let hostingController = NSHostingController(rootView: SettingsView())
+        
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 550, height: 500),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        
+        window.center()
+        window.title = "Настройки Smblight"
+        window.contentViewController = hostingController
+        window.isReleasedWhenClosed = false // чтобы окно не уничтожалось при закрытии на крестик
+        
+        // НАЗНАЧАЕМ ДЕЛЕГАТА (чтобы отловить момент закрытия окна)
+        window.delegate = self
+        
+        self.settingsWindow = window
+        
+        // Выводим окно поверх всех
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    // 3. ОТЛАВЛИВАЕМ ЗАКРЫТИЕ ОКНА
+    func windowWillClose(_ notification: Notification) {
+        // Возвращаем приложение в фоновый режим (прячем иконку из Дока)
+        NSApp.setActivationPolicy(.accessory)
+        self.settingsWindow = nil
+    }
+    
+    /// Проверяет, состоит ли текущий пользователь мака в группе admin
+    private func isCurrentUserAdmin() -> Bool {
+        // В macOS группа администраторов (admin) всегда имеет ID 80
+        let adminGroupID: gid_t = 80
+        
+        // Получаем количество групп, в которых состоит пользователь
+        let groupCount = getgroups(0, nil)
+        if groupCount <= 0 { return false }
+        
+        // Читаем ID всех этих групп
+        var groups = [gid_t](repeating: 0, count: Int(groupCount))
+        getgroups(groupCount, &groups)
+        
+        // Возвращаем true, если 80 есть в списке дополнительных групп
+        // или является основной группой (getgid)
+        return groups.contains(adminGroupID) || getgid() == adminGroupID
+    }
 }

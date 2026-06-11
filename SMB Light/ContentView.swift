@@ -3,38 +3,62 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var settings = SettingsManager.shared
     
+    // Упростим список для более удобного парсинга в радиокнопки
     let themes = [
-        ("Светофор (🟢 / 🔴)", "trafficlight"),
-        ("Яблоко (🍏 / 🍎)", "apple"),
-        ("Сердца (💚 / 💔)", "myhart"),
-        ("Флора (🌵 / 🍄)", "flora"),
-        ("Фауна (🐸 / 🐽)", "fauna")
+        ("trafficlight", "traffic"),
+        ("apple", "apple"),
+        ("myhart", "myhart"),
+        ("flora", "flora"),
+        ("fauna", "fauna")
     ]
     
     var body: some View {
         VStack(spacing: 15) {
             
-            // MARK: - Настройки внешнего вида (Верхняя строка)
-            HStack {
-                Text("Стиль иконок:")
-                    .font(.headline)
+            // MARK: - Настройки внешнего вида (Радиокнопки в ряд)
+            HStack(alignment: .center, spacing: 15) {
+                //Text("Theme")
+                    //.font(.headline)
                 
                 Spacer()
                 
-                Picker("", selection: $settings.theme) {
-                    ForEach(themes, id: \.1) { theme in
-                        Text(theme.0).tag(theme.1)
+                // Проходим по всем темам и рисуем каждую как кнопку
+                ForEach(themes, id: \.1) { theme in
+                    let themeID = theme.1
+                    let icons = IconTheme.get(theme: themeID)
+                    
+                    Button(action: {
+                        settings.theme = themeID
+                    }) {
+                        HStack(spacing: 5) {
+                            // Иконка радиокнопки
+                            Image(systemName: settings.theme == themeID ? "dot.circle.fill" : "circle")
+                                .foregroundColor(settings.theme == themeID ? .blue : .secondary)
+                                .font(.system(size: 14))
+                            
+                            // Эмодзи из темы
+                            Text("\(icons.online)\(icons.offline)")
+                                .font(.system(size: 12))
+                            
+                            // Название темы (ID)
+                            Text(themeID)
+                                .foregroundColor(settings.theme == themeID ? .primary : .secondary)
+                                .font(.system(size: 12, design: .default))
+                        }
+                        .padding(.horizontal, 4)
+                        .contentShape(Rectangle()) // Чтобы кликалась вся область
                     }
+                    .buttonStyle(PlainButtonStyle()) // Убираем стандартную обводку кнопки
                 }
-                .labelsHidden()
-                .frame(width: 200)
+                
+                Spacer()
             }
+            .padding(.vertical, 1)
             
             Divider()
-                .padding(.vertical, 5)
+                .padding(.vertical, 1)
             
             // MARK: - Секции дисков
-            // Передаем флаг isPriority, чтобы секция знала, кем она является
             DriveSectionView(title: "Priority Drives (в строке меню)", isPriority: true, drives: $settings.priorityDrives)
             
             Divider()
@@ -43,7 +67,7 @@ struct SettingsView: View {
             DriveSectionView(title: "Storage Drives", isPriority: false, drives: $settings.storageDrives)
         }
         .padding(20)
-        .frame(width: 550, height: 650)
+        .frame(width: 650, height: 650) // Немного увеличил ширину, чтобы влезли все кнопки в ряд
     }
 }
 
