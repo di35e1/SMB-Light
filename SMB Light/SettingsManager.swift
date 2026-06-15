@@ -179,6 +179,94 @@ class SettingsManager: ObservableObject {
             ]
         }
     }
+    
+    /// Импортирует настройки из выбранного пользователем файла YAML
+        func importFromYAML(at url: URL) -> Bool {
+            guard let content = try? String(contentsOf: url, encoding: .utf8) else {
+                return false
+            }
+
+            var currentSection = ""
+            var importedPriority: [Drive] = []
+            var importedStorage: [Drive] = []
+            var importedTheme: String?
+
+            let lines = content.components(separatedBy: .newlines)
+
+            for line in lines {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.isEmpty { continue }
+
+                // 1. Ищем тему
+                if trimmed.hasPrefix("\"Theme\":") {
+                    let parts = trimmed.components(separatedBy: ":")
+                    if parts.count >= 2 {
+                        importedTheme = parts[1].trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "\"", with: "")
+                    }
+                }
+                // 2. Ищем целевые секции
+                else if trimmed.hasPrefix("\"NetworkDrivesPriority\":") {
+                    currentSection = "Priority"
+                } else if trimmed.hasPrefix("\"NetworkDrives\":") {
+                    currentSection = "Storage"
+                }
+                // 3. БЛОКИРУЕМ ДРУГИЕ СЕКЦИИ: если строка заканчивается на ":" (например, "UserCommands": или "SocksServers":)
+                else if trimmed.hasSuffix(":") {
+                    // Переводим парсер в режим игнорирования
+                    currentSection = "Ignore"
+                }
+                // 4. Парсим списки (только если мы находимся в нужной секции)
+                else if trimmed.hasPrefix("-") {
+                    // Если мы в блоке Ignore, просто переходим к следующей строке
+                    guard currentSection == "Priority" || currentSection == "Storage" else { continue }
+                    
+                    let rawStr = String(trimmed.dropFirst(1)).trimmingCharacters(in: .whitespaces)
+                    let parts = rawStr.components(separatedBy: ": \"")
+                    
+                    if parts.count == 2 {
+                        let name = parts[0].replacingOccurrences(of: "\"", with: "")
+                        var path = parts[1].replacingOccurrences(of: "\"", with: "")
+                        
+                        if path.hasPrefix("smb://") {
+                            path = String(path.dropFirst(6))
+                        }
+                        
+                        let drive = Drive(name: name, path: path)
+                        
+                        if currentSection == "Priority" {
+                            importedPriority.append(drive)
+                        } else if currentSection == "Storage" {
+                            importedStorage.append(drive)
+                        }
+                    }
+                }
+            }
+
+            // Если в файле вообще не нашлось нужных данных — выходим с ошибкой
+            if importedTheme == nil && importedPriority.isEmpty && importedStorage.isEmpty {
+                return false
+            }
+
+            // Обновляем данные на главном потоке
+            DispatchQueue.main.async {
+                self.isLoading = true
+                
+                if let theme = importedTheme {
+                    self.theme = theme
+                }
+                if !importedPriority.isEmpty {
+                    self.priorityDrives = importedPriority
+                }
+                if !importedStorage.isEmpty {
+                    self.storageDrives = importedStorage
+                }
+                
+                self.isLoading = false
+                self.save()
+            }
+
+            return true
+        }
 }
 
 struct IconTheme {

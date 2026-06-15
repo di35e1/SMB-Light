@@ -1,5 +1,6 @@
 import Foundation
 import SystemConfiguration
+import os
 
 class ProxyManager {
     
@@ -7,13 +8,13 @@ class ProxyManager {
     static func setSocksProxy(enabled: Bool) -> Bool {
         // 1. Узнаем системное имя интерфейса (например, en0)
         guard let interfaceName = getPrimaryInterfaceName() else {
-            print("Не удалось определить активный интерфейс")
+            Logger.system.error("Не удалось определить активный интерфейс")
             return false
         }
         
         // 2. Узнаем человеческое имя интерфейса для networksetup (например, "Wi-Fi" или "Ethernet")
         guard let hardwareName = getHardwareName(for: interfaceName) else {
-            print("Не удалось определить имя сети для \(interfaceName)")
+            Logger.system.error("Не удалось определить имя сети для \(interfaceName)")
             return false
         }
         
@@ -38,12 +39,12 @@ class ProxyManager {
             } else {
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
                 if let output = String(data: data, encoding: .utf8) {
-                    print("Ошибка networksetup: \(output)")
+                    Logger.system.error("Ошибка networksetup: \(output)")
                 }
                 return false
             }
         } catch {
-            print("Ошибка запуска Process: \(error)")
+            Logger.system.error("Ошибка запуска Process: \(error)")
             return false
         }
     }

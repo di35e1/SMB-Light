@@ -59,7 +59,7 @@ struct SettingsView: View {
                 .padding(.vertical, 1)
             
             // MARK: - Секции дисков
-            DriveSectionView(title: "Priority Drives (в строке меню)", isPriority: true, drives: $settings.priorityDrives)
+            DriveSectionView(title: "Priority Drives", isPriority: true, drives: $settings.priorityDrives)
             
             Divider()
                 .padding(.vertical, 5)
@@ -85,10 +85,10 @@ struct DriveSectionView: View {
                 .font(.headline)
             
             HStack {
-                Text("Имя")
+                Text("Name")
                     .fontWeight(.semibold)
                     .frame(width: 150, alignment: .leading)
-                Text("Путь")
+                Text("Path")
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -99,11 +99,11 @@ struct DriveSectionView: View {
             List(selection: $selection) {
                 ForEach($drives) { $drive in
                     HStack {
-                        TextField("Имя", text: $drive.name)
+                        TextField("Name", text: $drive.name)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .frame(width: 150)
                         
-                        TextField("Путь", text: $drive.path)
+                        TextField("Path", text: $drive.path)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                     }
                     .tag(drive.id)
@@ -112,7 +112,7 @@ struct DriveSectionView: View {
                         Button(action: {
                             moveDriveToOtherList(drive)
                         }) {
-                            Text(isPriority ? "Переместить в Storage Drives" : "Переместить в Priority Drives")
+                            Text(isPriority ? "Move to Storage Drives" : "Move toPriority Drives")
                             Image(systemName: "arrow.up.arrow.down")
                         }
                     }
@@ -139,7 +139,7 @@ struct DriveSectionView: View {
                 
                 Spacer()
                 
-                Text("Можно менять порядок перетаскиванием строк")
+                Text("You can change the order by dragging rows")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

@@ -3,6 +3,8 @@ import Network
 import ServiceManagement
 import SwiftUI
 import Combine
+import os
+import UniformTypeIdentifiers
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var statusItem: NSStatusItem!
@@ -14,7 +16,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var settingsWindow: NSWindow?
     var cancellables = Set<AnyCancellable>()
     
+    var isImportPanelOpen = false // Флаг для защиты от двойного открытия окна импорта
     let settings = SettingsManager.shared
+    
     
     func setupBindings() {
         settings.objectWillChange
@@ -34,7 +38,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let bundleID = Bundle.main.bundleIdentifier {
             // Ищем все запущенные процессы с таким же ID
             let runningApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-            
             // Если найдено больше одного процесса (то есть мы и кто-то еще),
             // тихо убиваем текущую копию до того, как она создаст иконку в меню.
             if runningApps.count > 1 {
@@ -57,7 +60,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            print("Событие: диск смонтирован")
+            //print("Событие: диск смонтирован")
+            Logger.network.info("Диск смонтирован")
             self?.updateStatus()
         }
         
@@ -67,7 +71,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            print("Событие: диск размонтирован")
+            Logger.network.info("Диск размонтирован")
             self?.updateStatus()
         }
     }
@@ -131,11 +135,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         dangerMenu.addItem(NSMenuItem(title: "Settings", action: #selector(showSettings), keyEquivalent: ""))
         
+        dangerMenu.addItem(NSMenuItem(title: "Import Settings...", action: #selector(importSettingsClicked(_:)), keyEquivalent: ""))
+        
         dangerZone.submenu = dangerMenu
         menu.addItem(NSMenuItem.separator())
         menu.addItem(dangerZone)
         menu.addItem(NSMenuItem.separator())
-
+        
         if isCurrentUserAdmin() {
             // Proxy toggle
             let proxyItem = NSMenuItem(title: "SOCKS Proxy", action: #selector(toggleProxy(_:)), keyEquivalent: "")
@@ -147,7 +153,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             // Если пользователь не админ, очищаем ссылку, чтобы кнопка точно нигде не всплыла
             self.proxyMenuItem = nil
         }
-
+        
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: ""))
         
         statusItem.menu = menu
@@ -250,9 +256,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if success {
             sender.state = newState ? .on : .off
             sender.title = newState ? "Disable SOCKS Proxy" : "Enable SOCKS Proxy"
-            print("Статус SOCKS прокси изменен: \(newState)")
+            Logger.network.info("Статус SOCKS прокси изменен: \(newState)")
         } else {
-            print("Не удалось изменить статус прокси (возможно, отменен ввод пароля)")
+            Logger.network.error("Не удалось изменить статус прокси (возможно, отменен ввод пароля)")
         }
     }
     
@@ -268,10 +274,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             // ДИСК УЖЕ ПОДКЛЮЧЕН: Открываем его в Finder
             let url = URL(fileURLWithPath: volumePath)
             NSWorkspace.shared.open(url)
-            print("Диск уже подключен, открываю через Finder: \(volumePath)")
+            Logger.network.info("Диск уже подключен, открываю через Finder: \(volumePath)")
         } else {
             // ДИСК НЕ ПОДКЛЮЧЕН: Выполняем стандартное монтирование
-            print("Диск не подключен, запускаю SMB-подключение: \(drive.path)")
+            Logger.network.info("Диск не подключен, запускаю SMB-подключение: \(drive.path)")
             
             let urlString = "smb://\(drive.path)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
             if let url = URL(string: urlString) {
@@ -302,7 +308,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             for drive in allDrives {
                 // Ищем реальную точку монтирования по пути из настроек
                 if let volumePath = mountedMap[drive.path.lowercased()] {
-                    print("Принудительное размонтирование: \(volumePath)")
+                    Logger.network.info("Принудительное размонтирование: \(volumePath)")
                     
                     let task = Process()
                     task.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
@@ -324,7 +330,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 sender.state = .on
             }
         } catch let error as NSError {
-            print("Ошибка автозапуска: \(error)")
+            Logger.system.error("Ошибка автозапуска: \(error)")
             
             // Обработка блокировки тумблера в Системных настройках (Operation not permitted)
             if error.code == 1 {
@@ -355,13 +361,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         try? task.run()
     }
     
-    @objc func openEditor() {
-        NSWorkspace.shared.open(URL(string: "https://editor.visualrian.ru/")!)
-    }
-    
-    @objc func openMediabank() {
-        NSWorkspace.shared.open(URL(string: "https://riamediabank.ru/")!)
-    }
+    //    @objc func openEditor() {
+    //        NSWorkspace.shared.open(URL(string: "https://")!)
+    //    }
+    //
+    //    @objc func openMediabank() {
+    //        NSWorkspace.shared.open(URL(string: "https://")!)
+    //    }
     
     @objc func showSettings() {
         // 2. ВКЛЮЧАЕМ ОТОБРАЖЕНИЕ В ДОКЕ
@@ -386,7 +392,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         )
         
         window.center()
-        window.title = "Настройки Smblight"
+        window.level = .floating
+        window.title = "SMB Light settings"
         window.contentViewController = hostingController
         window.isReleasedWhenClosed = false // чтобы окно не уничтожалось при закрытии на крестик
         
@@ -423,5 +430,53 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Возвращаем true, если 80 есть в списке дополнительных групп
         // или является основной группой (getgid)
         return groups.contains(adminGroupID) || getgid() == adminGroupID
+    }
+    
+    @objc func importSettingsClicked(_ sender: NSMenuItem) {
+        // 1. ЗАЩИТА: Если окно уже открыто — просто игнорируем нажатие
+        guard !isImportPanelOpen else { return }
+        isImportPanelOpen = true
+        
+        NSApp.activate(ignoringOtherApps: true)
+        
+        let openPanel = NSOpenPanel()
+        openPanel.title = "Выберите файл settings.yaml"
+        openPanel.showsResizeIndicator = true
+        openPanel.showsHiddenFiles = true
+        openPanel.allowsMultipleSelection = false
+        openPanel.canChooseDirectories = false
+        openPanel.canChooseFiles = true
+        
+        openPanel.allowedContentTypes = [
+            UTType(filenameExtension: "yaml"),
+            //UTType(filenameExtension: "yml")
+        ].compactMap { $0 }
+        
+        // Открываем панель модально
+        // ВАЖНО: Добавляем [weak self], чтобы безопасно обращаться к флагу внутри замыкания
+        openPanel.begin { [weak self] response in
+            
+            // 2. СНИМАЕМ БЛОКИРОВКУ, как только окно закрылось (кнопкой ОК или Отмена)
+            self?.isImportPanelOpen = false
+            
+            if response == .OK, let fileURL = openPanel.url {
+                let isSuccess = SettingsManager.shared.importFromYAML(at: fileURL)
+                
+                DispatchQueue.main.async {
+                    let alert = NSAlert()
+                    if isSuccess {
+                        alert.messageText = "Импорт завершен"
+                        alert.informativeText = "Настройки успешно загружены из файла и применены."
+                        alert.alertStyle = .informational
+                    } else {
+                        alert.messageText = "Ошибка импорта"
+                        alert.informativeText = "Не удалось распознать структуру Smblight в выбранном файле."
+                        alert.alertStyle = .warning
+                    }
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                }
+            }
+        }
     }
 }
