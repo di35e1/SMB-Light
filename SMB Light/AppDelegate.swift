@@ -18,7 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     var isImportPanelOpen = false // Флаг для защиты от двойного открытия окна импорта
     let settings = SettingsManager.shared
-    
+
     
     func setupBindings() {
         settings.objectWillChange
@@ -122,6 +122,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         dangerMenu.addItem(NSMenuItem(title: "Terminal", action: #selector(openTerminal), keyEquivalent: ""))
         dangerMenu.addItem(NSMenuItem(title: "killall Finder", action: #selector(killFinder), keyEquivalent: ""))
+        dangerMenu.addItem(NSMenuItem(title: "Import Settings...", action: #selector(importSettingsClicked(_:)), keyEquivalent: ""))
         dangerMenu.addItem(NSMenuItem.separator())
         
         // Автозагрузка (Modern API macOS 13+)
@@ -134,9 +135,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         
         dangerMenu.addItem(NSMenuItem(title: "Settings", action: #selector(showSettings), keyEquivalent: ""))
-        
-        dangerMenu.addItem(NSMenuItem(title: "Import Settings...", action: #selector(importSettingsClicked(_:)), keyEquivalent: ""))
-        
+       
         dangerZone.submenu = dangerMenu
         menu.addItem(NSMenuItem.separator())
         menu.addItem(dangerZone)
@@ -385,8 +384,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let hostingController = NSHostingController(rootView: SettingsView())
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 550, height: 500),
-            styleMask: [.titled, .closable, .miniaturizable],
+            contentRect: NSRect(x: 0, y: 0, width: 650, height: 650),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )

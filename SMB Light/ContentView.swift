@@ -18,7 +18,7 @@ struct SettingsView: View {
             // MARK: - Настройки внешнего вида (Радиокнопки в ряд)
             HStack(alignment: .center, spacing: 15) {
                 //Text("Theme")
-                    //.font(.headline)
+                //.font(.headline)
                 
                 Spacer()
                 
@@ -67,7 +67,12 @@ struct SettingsView: View {
             DriveSectionView(title: "Storage Drives", isPriority: false, drives: $settings.storageDrives)
         }
         .padding(20)
-        .frame(width: 650, height: 650) // Немного увеличил ширину, чтобы влезли все кнопки в ряд
+        
+        .frame(minWidth: 650, maxWidth: 650, minHeight: 650, maxHeight: .infinity) // Немного увеличил ширину, чтобы влезли все кнопки в ряд
+        
+        .onDisappear {
+            SettingsManager.shared.validateAndClean()
+        }
     }
 }
 
@@ -97,25 +102,37 @@ struct DriveSectionView: View {
             .foregroundColor(.secondary)
             
             List(selection: $selection) {
-                ForEach($drives) { $drive in
-                    HStack {
-                        TextField("Name", text: $drive.name)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 150)
-                        
-                        TextField("Path", text: $drive.path)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    .tag(drive.id)
-                    // ДОБАВЛЯЕМ КОНТЕКСТНОЕ МЕНЮ (ПРАВЫЙ КЛИК)
-                    .contextMenu {
-                        Button(action: {
-                            moveDriveToOtherList(drive)
-                        }) {
-                            Text(isPriority ? "Move to Storage Drives" : "Move toPriority Drives")
-                            Image(systemName: "arrow.up.arrow.down")
+                ForEach(drives) { drive in
+                    
+                    // Создаем безопасную привязку для каждой строки
+                    let safeBinding = Binding<Drive>(
+                        get: {
+                            // Если диск всё ещё в массиве — возвращаем его
+                            if let index = drives.firstIndex(where: { $0.id == drive.id }) {
+                                return drives[index]
+                            }
+                            // Если его удалила валидация — возвращаем "фантомную" копию во избежание краша
+                            return drive
+                        },
+                        set: { newValue in
+                            // Записываем новые данные, только если диск реально существует
+                            if let index = drives.firstIndex(where: { $0.id == drive.id }) {
+                                drives[index] = newValue
+                            }
                         }
-                    }
+                    )
+                    
+                    // Передаем нашу безопасную привязку в DriveRowView
+                    DriveRowView(drive: safeBinding)
+                        .tag(drive.id)
+                        .contextMenu {
+                            Button(action: {
+                                moveDriveToOtherList(drive)
+                            }) {
+                                Text(isPriority ? "Move to Storage Drives" : "Move to Priority Drives")
+                                Image(systemName: "arrow.up.arrow.down")
+                            }
+                        }
                 }
                 .onMove { indices, newOffset in
                     drives.move(fromOffsets: indices, toOffset: newOffset)
@@ -170,5 +187,45 @@ struct DriveSectionView: View {
         
         // Сбрасываем выделение, чтобы строка не "застряла" в памяти
         selection.remove(drive.id)
+    }
+}
+
+// MARK: - Отдельная строка для диска (для правильной работы фокуса)
+struct DriveRowView: View {
+    @Binding var drive: Drive
+    
+    // Индивидуальные состояния фокуса для конкретной строки
+    @FocusState private var isNameFocused: Bool
+    @FocusState private var isPathFocused: Bool
+    
+    var body: some View {
+        HStack {
+            TextField("Name", text: $drive.name)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .frame(width: 150)
+                .focused($isNameFocused) // 1. Привязываем фокус
+                .onSubmit {
+                    SettingsManager.shared.validateAndClean()
+                }
+                .onChange(of: isNameFocused) { isFocused in
+                    // 2. Если фокус пропал (стал false), сохраняем чистовик
+                    if !isFocused {
+                        SettingsManager.shared.validateAndClean()
+                    }
+                }
+            
+            TextField("Path", text: $drive.path)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .focused($isPathFocused) // 1. Привязываем фокус
+                .onSubmit {
+                    SettingsManager.shared.validateAndClean()
+                }
+                .onChange(of: isPathFocused) { isFocused in
+                    // 2. Если фокус пропал (стал false), сохраняем чистовик
+                    if !isFocused {
+                        SettingsManager.shared.validateAndClean()
+                    }
+                }
+        }
     }
 }

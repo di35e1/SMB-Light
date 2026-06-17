@@ -26,46 +26,54 @@ class SettingsManager: ObservableObject {
     private var isLoading = true
 
     func sanitizeDrive(_ drive: Drive) -> Drive {
-            var sanitized = drive
-                
-            // 1. Убираем "smb://"
-            if sanitized.path.lowercased().hasPrefix("smb://") {
-                sanitized.path = String(sanitized.path.dropFirst(6))
-            }
+        var sanitized = drive
             
-            // 2. Очистка пути: убираем лишние пробелы и обратные слэши,
-            // но оставляем кириллицу и слэши как есть.
-            sanitized.path = sanitized.path
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .replacingOccurrences(of: "\\", with: "/") // Заменяем возможные обратные слэши на прямые
-                
-            // 3. Если имя пустое — берем хвост пути
-            if sanitized.name.trimmingCharacters(in: .whitespaces).isEmpty {
-                let pathComponents = sanitized.path.split(separator: "/")
-                sanitized.name = String(pathComponents.last ?? "Unknown")
-            }
-                
-            return sanitized
+        // 1. Убираем "smb://"
+        if sanitized.path.lowercased().hasPrefix("smb://") {
+            sanitized.path = String(sanitized.path.dropFirst(6))
         }
+        
+        // 2. Очистка пути: убираем лишние пробелы и обратные слэши
+        sanitized.path = sanitized.path
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\\", with: "/")
+            
+        // 3. Если имя пустое — берем хвост пути
+        if sanitized.name.trimmingCharacters(in: .whitespaces).isEmpty {
+            let pathComponents = sanitized.path.split(separator: "/")
+            sanitized.name = String(pathComponents.last ?? "Unknown")
+        }
+            
+        return sanitized
+    }
+    
+    // Вспомогательная функция: нормализует путь для корректного сравнения
+    private func normalizePathKey(_ path: String) -> String {
+        var key = path.lowercased().trimmingCharacters(in: .whitespaces)
+        // Если на конце есть один или несколько слэшей — отрезаем их
+        while key.hasSuffix("/") {
+            key.removeLast()
+        }
+        return key
+    }
     
     // MARK: - Глобальная защита от дубликатов
-    // Теперь функция проверяет текущий список с оглядкой на "соседний" список
     private func enforceUniqueness(for drives: [Drive], against otherDrives: [Drive]) -> [Drive] {
         var result: [Drive] = []
         
-        // 1. Предзаполняем фильтры данными из соседнего списка,
-        // чтобы знать, какие пути и имена уже заняты в другом блоке
         var seenNames = Set(otherDrives.map { $0.name.lowercased().trimmingCharacters(in: .whitespaces) })
-        var seenPaths = Set(otherDrives.map { $0.path.lowercased().trimmingCharacters(in: .whitespaces) })
+        // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ ЗДЕСЬ:
+        var seenPaths = Set(otherDrives.map { normalizePathKey($0.path) })
         
         for drive in drives {
             var currentDrive = drive
             
             var nameKey = currentDrive.name.lowercased().trimmingCharacters(in: .whitespaces)
-            let pathKey = currentDrive.path.lowercased().trimmingCharacters(in: .whitespaces)
+            // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ ЗДЕСЬ:
+            let pathKey = normalizePathKey(currentDrive.path)
             
-            // Разрешаем дублировать только базовый шаблон
-            let isDefaultPath = (pathKey == "msk.rian/" || pathKey == "")
+            // ВАЖНО: Базовый шаблон теперь сравниваем без слэша на конце
+            let isDefaultPath = (pathKey == "msk.rian" || pathKey == "")
             
             // Проверка путей (сквозная)
             if seenPaths.contains(pathKey) && !isDefaultPath {
@@ -103,13 +111,7 @@ class SettingsManager: ObservableObject {
     var priorityDrives: [Drive] = [] {
         willSet { objectWillChange.send() }
         didSet {
-            var processed = priorityDrives.map { sanitizeDrive($0) }
-            // Проверяем priorityDrives, учитывая то, что уже лежит в storageDrives
-            processed = enforceUniqueness(for: processed, against: storageDrives)
-            
-            if priorityDrives != processed {
-                priorityDrives = processed
-            }
+            // Оставляем только тихое сохранение сырого ввода
             if !isLoading { save() }
         }
     }
@@ -117,13 +119,7 @@ class SettingsManager: ObservableObject {
     var storageDrives: [Drive] = [] {
         willSet { objectWillChange.send() }
         didSet {
-            var processed = storageDrives.map { sanitizeDrive($0) }
-            // Проверяем storageDrives, учитывая то, что уже лежит в priorityDrives
-            processed = enforceUniqueness(for: processed, against: priorityDrives)
-            
-            if storageDrives != processed {
-                storageDrives = processed
-            }
+            // Оставляем только тихое сохранение сырого ввода
             if !isLoading { save() }
         }
     }
@@ -132,12 +128,37 @@ class SettingsManager: ObservableObject {
         load()
     }
     
+    // MARK: - Валидация
+    /// Вызывайте эту функцию из UI, когда пользователь завершил редактирование
+    func validateAndClean() {
+        // Устанавливаем флаг, чтобы избежать бесконечного цикла, так как мы будем изменять массивы
+        isLoading = true
+        defer {
+            isLoading = false
+            save() // Окончательно сохраняем очищенные данные
+        }
+        
+        var processedPriority = priorityDrives.map { sanitizeDrive($0) }
+        var processedStorage = storageDrives.map { sanitizeDrive($0) }
+        
+        // Сквозная проверка на уникальность
+        processedPriority = enforceUniqueness(for: processedPriority, against: processedStorage)
+        processedStorage = enforceUniqueness(for: processedStorage, against: processedPriority)
+        
+        // Применяем изменения только если они реально есть, чтобы не дергать UI лишний раз
+        if priorityDrives != processedPriority {
+            priorityDrives = processedPriority
+        }
+        if storageDrives != processedStorage {
+            storageDrives = processedStorage
+        }
+    }
+    
     // MARK: - Сохранение и загрузка
     func save() {
         guard !isLoading else { return }
         
         let encoder = JSONEncoder()
-        
         UserDefaults.standard.set(theme, forKey: "Theme")
         
         if let encodedPriority = try? encoder.encode(priorityDrives) {
@@ -177,6 +198,12 @@ class SettingsManager: ObservableObject {
             self.storageDrives = [
                 Drive(name: "Диск W", path: "msk.rian/PublicFolders/W")
             ]
+        }
+        
+        // При загрузке приложения тоже прогоняем валидацию на случай, если
+        // пользователь закрыл приложение до того, как сработала проверка.
+        DispatchQueue.main.async { [weak self] in
+            self?.validateAndClean()
         }
     }
     
@@ -262,7 +289,7 @@ class SettingsManager: ObservableObject {
                 }
                 
                 self.isLoading = false
-                self.save()
+                self.validateAndClean()
             }
 
             return true
