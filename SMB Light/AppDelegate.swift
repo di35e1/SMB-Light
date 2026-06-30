@@ -25,7 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Ждем 0.5 секунды после окончания ввода текста в настройках
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .sink { [weak self] _ in
-                // Пересобираем меню и сразу обновляем статусы (кружочки)
+                // Пересобираем меню и сразу обновляем статусы
                 self?.buildMenu()
                 self?.updateStatus()
             }
@@ -33,8 +33,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // 1. ПРОВЕРКА НА ВТОРУЮ КОПИЮ
-        // Получаем Bundle ID приложения (например, com.user.smblight)
+        // ПРОВЕРКА НА ВТОРУЮ КОПИЮ
+        // Получаем Bundle ID приложения (com.user.smblight)
         if let bundleID = Bundle.main.bundleIdentifier {
             // Ищем все запущенные процессы с таким же ID
             let runningApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
@@ -61,7 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             queue: .main
         ) { [weak self] notification in
             //print("Событие: диск смонтирован")
-            Logger.network.info("Диск смонтирован")
+            Logger.network.info("The drive is mounted.")
             self?.updateStatus()
         }
         
@@ -71,7 +71,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            Logger.network.info("Диск размонтирован")
+            Logger.network.info("The drive is unmounted.")
             self?.updateStatus()
         }
     }
@@ -149,12 +149,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             menu.addItem(proxyItem)
             menu.addItem(NSMenuItem.separator())
         } else {
-            // Если пользователь не админ, очищаем ссылку, чтобы кнопка точно нигде не всплыла
+            // Если пользователь не админ, очищаем ссылку, чтобы кнопка не всплыла
             self.proxyMenuItem = nil
         }
         
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: ""))
-        
+
         statusItem.menu = menu
     }
     
@@ -175,8 +175,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 
                 // Приводим путь из настроек к нижнему регистру
                 let pathLower = drive.path.lowercased()
-                
-                // Проверяем как закодированный путь (системный стандарт), так и оригинал на всякий случай
                 let isMounted = mountedMap.keys.contains(pathLower)
                 
                 if isMounted {
@@ -206,7 +204,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         
     }
-    
+
     func getMountedSMBDrives() -> [String: String] {
         let task = Process()
         let pipe = Pipe()
@@ -248,27 +246,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc func toggleProxy(_ sender: NSMenuItem) {
         let isCurrentlyOn = sender.state == .on
         let newState = !isCurrentlyOn
-        
-        // Вызываем метод только с одним параметром — включить или выключить
         let success = ProxyManager.setSocksProxy(enabled: newState)
         
         if success {
             sender.state = newState ? .on : .off
             sender.title = newState ? "Disable SOCKS Proxy" : "Enable SOCKS Proxy"
-            Logger.network.info("Статус SOCKS прокси изменен: \(newState)")
+            Logger.network.info("SOCKS proxy status changed: \(newState)")
         } else {
-            Logger.network.error("Не удалось изменить статус прокси (возможно, отменен ввод пароля)")
+            Logger.network.error("Failed to change proxy status")
         }
     }
-    
     
     @objc func driveClicked(_ sender: NSMenuItem) {
         guard let drive = sender.representedObject as? Drive else { return }
         
-        // 1. Получаем карту текущих подключений (путь из настроек : реальный путь в /Volumes)
+        // Получаем карту текущих подключений (путь из настроек : реальный путь в /Volumes)
         let mountedMap = getMountedSMBDrives()
         
-        // 2. Ищем, смонтирован ли диск (игнорируя регистр)
+        // Ищем, смонтирован ли диск (игнорируя регистр)
         if let volumePath = mountedMap[drive.path.lowercased()] {
             // ДИСК УЖЕ ПОДКЛЮЧЕН: Открываем его в Finder
             let url = URL(fileURLWithPath: volumePath)
@@ -277,7 +272,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         } else {
             // ДИСК НЕ ПОДКЛЮЧЕН: Выполняем стандартное монтирование
             Logger.network.info("Диск не подключен, запускаю SMB-подключение: \(drive.path)")
-            
+
             let urlString = "smb://\(drive.path)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
             if let url = URL(string: urlString) {
                 NSWorkspace.shared.open(url)
@@ -330,7 +325,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         } catch let error as NSError {
             Logger.system.error("Ошибка автозапуска: \(error)")
-            
+
             // Обработка блокировки тумблера в Системных настройках (Operation not permitted)
             if error.code == 1 {
                 let alert = NSAlert()
@@ -344,7 +339,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     SMAppService.openSystemSettingsLoginItems()
                 }
             }
-            
+
             sender.state = .off
         }
     }
@@ -369,9 +364,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     //    }
     
     @objc func showSettings() {
-        // 2. ВКЛЮЧАЕМ ОТОБРАЖЕНИЕ В ДОКЕ
+        // ВКЛЮЧАЕМ ОТОБРАЖЕНИЕ В ДОКЕ
         NSApp.setActivationPolicy(.regular)
-        
+
         // Если окно уже было создано, просто выводим его на передний план
         if let window = settingsWindow {
             window.makeKeyAndOrderFront(nil)
@@ -391,7 +386,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         )
         
         window.center()
-        window.level = .floating
+        window.level = .floating // Прибить поверх всех окон
         window.title = "SMB Light settings"
         window.contentViewController = hostingController
         window.isReleasedWhenClosed = false // чтобы окно не уничтожалось при закрытии на крестик
@@ -406,14 +401,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
     
-    // 3. ОТЛАВЛИВАЕМ ЗАКРЫТИЕ ОКНА
+    // ОТЛАВЛИВАЕМ ЗАКРЫТИЕ ОКНА
     func windowWillClose(_ notification: Notification) {
         // Возвращаем приложение в фоновый режим (прячем иконку из Дока)
         NSApp.setActivationPolicy(.accessory)
         self.settingsWindow = nil
     }
     
-    /// Проверяет, состоит ли текущий пользователь мака в группе admin
+    // Проверяет, состоит ли текущий пользователь мака в группе admin
     private func isCurrentUserAdmin() -> Bool {
         // В macOS группа администраторов (admin) всегда имеет ID 80
         let adminGroupID: gid_t = 80
@@ -432,7 +427,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     
     @objc func importSettingsClicked(_ sender: NSMenuItem) {
-        // 1. ЗАЩИТА: Если окно уже открыто — просто игнорируем нажатие
+        // ЗАЩИТА: Если окно уже открыто — просто игнорируем нажатие
         guard !isImportPanelOpen else { return }
         isImportPanelOpen = true
         
@@ -455,7 +450,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // ВАЖНО: Добавляем [weak self], чтобы безопасно обращаться к флагу внутри замыкания
         openPanel.begin { [weak self] response in
             
-            // 2. СНИМАЕМ БЛОКИРОВКУ, как только окно закрылось (кнопкой ОК или Отмена)
+            // СНИМАЕМ БЛОКИРОВКУ, как только окно закрылось (кнопкой ОК или Отмена)
             self?.isImportPanelOpen = false
             
             if response == .OK, let fileURL = openPanel.url {

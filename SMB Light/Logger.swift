@@ -6,7 +6,7 @@ import os
 // Logger.system.error("Не удалось найти активный интерфейс")
 
 extension Logger {
-    /// Динамически получаем Bundle ID нашего приложения
+    // Динамически получаем Bundle ID нашего приложения
     private static var subsystem: String {
         Bundle.main.bundleIdentifier ?? "com.default.smblight"
     }
@@ -16,3 +16,4 @@ extension Logger {
     static let ui = Logger(subsystem: subsystem, category: "UI")
     static let system = Logger(subsystem: subsystem, category: "System")
 }
+

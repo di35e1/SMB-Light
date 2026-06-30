@@ -6,13 +6,13 @@ class ProxyManager {
     
     /// Включает или выключает SOCKS прокси через вызов системной утилиты networksetup
     static func setSocksProxy(enabled: Bool) -> Bool {
-        // 1. Узнаем системное имя интерфейса (например, en0)
+        // Узнаем системное имя интерфейса (например, en0)
         guard let interfaceName = getPrimaryInterfaceName() else {
             Logger.system.error("Не удалось определить активный интерфейс")
             return false
         }
         
-        // 2. Узнаем человеческое имя интерфейса для networksetup (например, "Wi-Fi" или "Ethernet")
+        // Узнаем человеческое имя интерфейса для networksetup (например, "Wi-Fi" или "Ethernet")
         guard let hardwareName = getHardwareName(for: interfaceName) else {
             Logger.system.error("Не удалось определить имя сети для \(interfaceName)")
             return false
@@ -20,7 +20,7 @@ class ProxyManager {
         
         let state = enabled ? "on" : "off"
         
-        // 3. Запускаем утилиту напрямую (без sudo)
+        // Запускаем утилиту напрямую (без sudo), доступно для группы администраторов
         let task = Process()
         task.launchPath = "/usr/sbin/networksetup"
         task.arguments = ["-setsocksfirewallproxystate", hardwareName, state]
@@ -28,7 +28,7 @@ class ProxyManager {
         let pipe = Pipe()
         task.standardOutput = pipe
         task.standardError = pipe
-        
+    
         do {
             try task.run()
             task.waitUntilExit()
@@ -49,7 +49,7 @@ class ProxyManager {
         }
     }
     
-    // Вспомогательная функция: получает BSD имя (например, en0)
+    /// Вспомогательная функция: получает BSD имя (например, en0)
     private static func getPrimaryInterfaceName() -> String? {
         guard let store = SCDynamicStoreCreate(nil, "SmblightStatus" as CFString, nil, nil) else { return nil }
         let ipv4Key = SCDynamicStoreKeyCreateNetworkGlobalEntity(nil, kSCDynamicStoreDomainState, kSCEntNetIPv4)
@@ -60,7 +60,7 @@ class ProxyManager {
         return primaryInterface
     }
     
-    // Вспомогательная функция: превращает "en0" в красивое имя (например, "Wi-Fi")
+    /// Вспомогательная функция: превращает "en0" в красивое имя (например, "Wi-Fi")
     private static func getHardwareName(for bsdName: String) -> String? {
         let task = Process()
         task.launchPath = "/usr/sbin/networksetup"
@@ -92,7 +92,7 @@ class ProxyManager {
         }
         return nil
     }
-    
+
     /// Проверяет, включен ли сейчас SOCKS прокси на системном уровне (работает без паролей)
     static func isSocksProxyEnabled() -> Bool {
         // Создаем подключение к динамическому хранилищу состояния системы

@@ -10,23 +10,6 @@
 		8F730CA42FD89A96001CBD5C /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 8F730CA22FD89A90001CBD5C /* .gitignore */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		8FC1E10F2FD6E9730088BBFF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 8FC1E0F92FD6E9710088BBFF /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8FC1E1002FD6E9710088BBFF;
-			remoteInfo = "SMB Light";
-		};
-		8FC1E1192FD6E9730088BBFF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 8FC1E0F92FD6E9710088BBFF /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8FC1E1002FD6E9710088BBFF;
-			remoteInfo = "SMB Light";
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXCopyFilesBuildPhase section */
 		8FC7FB992FD700F100A16E8A /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -40,26 +23,16 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8F5C75DD2FF3E72C000FA7EB /* build_SMB_Light.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build_SMB_Light.sh; sourceTree = "<group>"; };
+		8F5C75DE2FF3E72C000FA7EB /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = icon.icns; sourceTree = "<group>"; };
 		8F730CA22FD89A90001CBD5C /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		8FC1E1012FD6E9710088BBFF /* SMB Light.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SMB Light.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		8FC1E10E2FD6E9730088BBFF /* SMB LightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SMB LightTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		8FC1E1182FD6E9730088BBFF /* SMB LightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SMB LightUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8FC1E1032FD6E9710088BBFF /* SMB Light */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "SMB Light";
-			sourceTree = "<group>";
-		};
-		8FC1E1112FD6E9730088BBFF /* SMB LightTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "SMB LightTests";
-			sourceTree = "<group>";
-		};
-		8FC1E11B2FD6E9730088BBFF /* SMB LightUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "SMB LightUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -72,31 +45,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8FC1E10B2FD6E9730088BBFF /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8FC1E1152FD6E9730088BBFF /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8F5C75DF2FF3E72C000FA7EB /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				8F5C75DD2FF3E72C000FA7EB /* build_SMB_Light.sh */,
+				8F5C75DE2FF3E72C000FA7EB /* icon.icns */,
+			);
+			path = Scripts;
+			sourceTree = "<group>";
+		};
 		8FC1E0F82FD6E9710088BBFF = {
 			isa = PBXGroup;
 			children = (
 				8FC1E1032FD6E9710088BBFF /* SMB Light */,
-				8FC1E1112FD6E9730088BBFF /* SMB LightTests */,
-				8FC1E11B2FD6E9730088BBFF /* SMB LightUITests */,
 				8FC1E1022FD6E9710088BBFF /* Products */,
 				8F730CA22FD89A90001CBD5C /* .gitignore */,
+				8F5C75DF2FF3E72C000FA7EB /* Scripts */,
 			);
 			sourceTree = "<group>";
 		};
@@ -104,8 +71,6 @@
 			isa = PBXGroup;
 			children = (
 				8FC1E1012FD6E9710088BBFF /* SMB Light.app */,
-				8FC1E10E2FD6E9730088BBFF /* SMB LightTests.xctest */,
-				8FC1E1182FD6E9730088BBFF /* SMB LightUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -136,52 +101,6 @@
 			productReference = 8FC1E1012FD6E9710088BBFF /* SMB Light.app */;
 			productType = "com.apple.product-type.application";
 		};
-		8FC1E10D2FD6E9730088BBFF /* SMB LightTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8FC1E1252FD6E9730088BBFF /* Build configuration list for PBXNativeTarget "SMB LightTests" */;
-			buildPhases = (
-				8FC1E10A2FD6E9730088BBFF /* Sources */,
-				8FC1E10B2FD6E9730088BBFF /* Frameworks */,
-				8FC1E10C2FD6E9730088BBFF /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				8FC1E1102FD6E9730088BBFF /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				8FC1E1112FD6E9730088BBFF /* SMB LightTests */,
-			);
-			name = "SMB LightTests";
-			packageProductDependencies = (
-			);
-			productName = "SMB LightTests";
-			productReference = 8FC1E10E2FD6E9730088BBFF /* SMB LightTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		8FC1E1172FD6E9730088BBFF /* SMB LightUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8FC1E1282FD6E9730088BBFF /* Build configuration list for PBXNativeTarget "SMB LightUITests" */;
-			buildPhases = (
-				8FC1E1142FD6E9730088BBFF /* Sources */,
-				8FC1E1152FD6E9730088BBFF /* Frameworks */,
-				8FC1E1162FD6E9730088BBFF /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				8FC1E11A2FD6E9730088BBFF /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				8FC1E11B2FD6E9730088BBFF /* SMB LightUITests */,
-			);
-			name = "SMB LightUITests";
-			packageProductDependencies = (
-			);
-			productName = "SMB LightUITests";
-			productReference = 8FC1E1182FD6E9730088BBFF /* SMB LightUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -194,14 +113,6 @@
 				TargetAttributes = {
 					8FC1E1002FD6E9710088BBFF = {
 						CreatedOnToolsVersion = 26.5;
-					};
-					8FC1E10D2FD6E9730088BBFF = {
-						CreatedOnToolsVersion = 26.5;
-						TestTargetID = 8FC1E1002FD6E9710088BBFF;
-					};
-					8FC1E1172FD6E9730088BBFF = {
-						CreatedOnToolsVersion = 26.5;
-						TestTargetID = 8FC1E1002FD6E9710088BBFF;
 					};
 				};
 			};
@@ -220,8 +131,6 @@
 			projectRoot = "";
 			targets = (
 				8FC1E1002FD6E9710088BBFF /* SMB Light */,
-				8FC1E10D2FD6E9730088BBFF /* SMB LightTests */,
-				8FC1E1172FD6E9730088BBFF /* SMB LightUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -235,20 +144,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8FC1E10C2FD6E9730088BBFF /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8FC1E1162FD6E9730088BBFF /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -259,34 +154,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8FC1E10A2FD6E9730088BBFF /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8FC1E1142FD6E9730088BBFF /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		8FC1E1102FD6E9730088BBFF /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8FC1E1002FD6E9710088BBFF /* SMB Light */;
-			targetProxy = 8FC1E10F2FD6E9730088BBFF /* PBXContainerItemProxy */;
-		};
-		8FC1E11A2FD6E9730088BBFF /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8FC1E1002FD6E9710088BBFF /* SMB Light */;
-			targetProxy = 8FC1E1192FD6E9730088BBFF /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		8FC1E1202FD6E9730088BBFF /* Debug */ = {
@@ -471,82 +339,6 @@
 			};
 			name = Release;
 		};
-		8FC1E1262FD6E9730088BBFF /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "di.SMB-LightTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SMB Light.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SMB Light";
-			};
-			name = Debug;
-		};
-		8FC1E1272FD6E9730088BBFF /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "di.SMB-LightTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SMB Light.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SMB Light";
-			};
-			name = Release;
-		};
-		8FC1E1292FD6E9730088BBFF /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "di.SMB-LightUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = "SMB Light";
-			};
-			name = Debug;
-		};
-		8FC1E12A2FD6E9730088BBFF /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "di.SMB-LightUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = "SMB Light";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -564,24 +356,6 @@
 			buildConfigurations = (
 				8FC1E1232FD6E9730088BBFF /* Debug */,
 				8FC1E1242FD6E9730088BBFF /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		8FC1E1252FD6E9730088BBFF /* Build configuration list for PBXNativeTarget "SMB LightTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8FC1E1262FD6E9730088BBFF /* Debug */,
-				8FC1E1272FD6E9730088BBFF /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		8FC1E1282FD6E9730088BBFF /* Build configuration list for PBXNativeTarget "SMB LightUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8FC1E1292FD6E9730088BBFF /* Debug */,
-				8FC1E12A2FD6E9730088BBFF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

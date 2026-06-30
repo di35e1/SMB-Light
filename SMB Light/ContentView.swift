@@ -68,7 +68,7 @@ struct SettingsView: View {
         }
         .padding(20)
         
-        .frame(minWidth: 650, maxWidth: 650, minHeight: 650, maxHeight: .infinity) // Немного увеличил ширину, чтобы влезли все кнопки в ряд
+        .frame(minWidth: 650, maxWidth: 650, minHeight: 650, maxHeight: .infinity)
         
         .onDisappear {
             SettingsManager.shared.validateAndClean()
@@ -79,9 +79,9 @@ struct SettingsView: View {
 // MARK: - Переиспользуемая секция для дисков
 struct DriveSectionView: View {
     var title: String
-    var isPriority: Bool // <-- Флаг для логики перемещения
+    var isPriority: Bool
     @Binding var drives: [Drive]
-    
+
     @State private var selection: Set<Drive.ID> = []
     
     var body: some View {
@@ -103,7 +103,7 @@ struct DriveSectionView: View {
             
             List(selection: $selection) {
                 ForEach(drives) { drive in
-                    
+
                     // Создаем безопасную привязку для каждой строки
                     let safeBinding = Binding<Drive>(
                         get: {
@@ -164,7 +164,7 @@ struct DriveSectionView: View {
     }
     
     func addDrive() {
-        let newDrive = Drive(name: "Новый диск", path: "msk.rian/")
+        let newDrive = Drive(name: "Новый диск", path: "msk.off/example")
         drives.append(newDrive)
     }
     
@@ -193,7 +193,7 @@ struct DriveSectionView: View {
 // MARK: - Отдельная строка для диска (для правильной работы фокуса)
 struct DriveRowView: View {
     @Binding var drive: Drive
-    
+
     // Индивидуальные состояния фокуса для конкретной строки
     @FocusState private var isNameFocused: Bool
     @FocusState private var isPathFocused: Bool

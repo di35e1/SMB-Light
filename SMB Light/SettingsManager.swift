@@ -231,18 +231,18 @@ class SettingsManager: ObservableObject {
                         importedTheme = parts[1].trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "\"", with: "")
                     }
                 }
-                // 2. Ищем целевые секции
+                // Ищем целевые секции
                 else if trimmed.hasPrefix("\"NetworkDrivesPriority\":") {
                     currentSection = "Priority"
                 } else if trimmed.hasPrefix("\"NetworkDrives\":") {
                     currentSection = "Storage"
                 }
-                // 3. БЛОКИРУЕМ ДРУГИЕ СЕКЦИИ: если строка заканчивается на ":" (например, "UserCommands": или "SocksServers":)
+                // БЛОКИРУЕМ ДРУГИЕ СЕКЦИИ: если строка заканчивается на ":" (например, "UserCommands": или "SocksServers":)
                 else if trimmed.hasSuffix(":") {
                     // Переводим парсер в режим игнорирования
                     currentSection = "Ignore"
                 }
-                // 4. Парсим списки (только если мы находимся в нужной секции)
+                // Парсим списки (только если мы находимся в нужной секции)
                 else if trimmed.hasPrefix("-") {
                     // Если мы в блоке Ignore, просто переходим к следующей строке
                     guard currentSection == "Priority" || currentSection == "Storage" else { continue }
